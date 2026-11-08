@@ -1,0 +1,60 @@
+// api/prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+enum Role {
+  PATRON
+  LIBRARIAN
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  role      Role     @default(PATRON)
+  createdAt DateTime @default(now())
+  reviews   Review[]
+}
+
+model Genre {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  slug  String @unique
+  books Book[]
+}
+
+model Book {
+  id              Int      @id @default(autoincrement())
+  title           String
+  author          String
+  isbn            String   @unique
+  totalCopies     Int      @default(1)
+  availableCopies Int      @default(1)
+  genreId         Int
+  genre           Genre    @relation(fields: [genreId], references: [id])
+  reviews         Review[]
+
+  @@index([genreId])
+}
+
+// Stretch: a second relation, joining Book and User
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int // 1-5, validated in the service layer in Week 2
+  comment   String?
+  createdAt DateTime @default(now())
+  bookId    Int
+  userId    Int
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, userId]) // one review per user per book
+  @@index([bookId])
+}
