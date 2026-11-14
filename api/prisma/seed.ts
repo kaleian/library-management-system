@@ -1,5 +1,6 @@
 // api/prisma/seed.ts
 import { PrismaClient, Role } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -70,15 +71,28 @@ async function main() {
   }
 
   // Sample users (one per role) so Review and later features have data
+  const librarianPassword = await bcrypt.hash('librarian123', 10);
+  const patronPassword = await bcrypt.hash('patron123', 10);
+
   const librarian = await prisma.user.upsert({
     where: { email: 'librarian@library.test' },
-    update: {},
-    create: { email: 'librarian@library.test', name: 'Lina Librarian', role: Role.LIBRARIAN },
+    update: { password: librarianPassword },
+    create: {
+      email: 'librarian@library.test',
+      name: 'Lina Librarian',
+      password: librarianPassword,
+      role: Role.LIBRARIAN,
+    },
   });
   const patron = await prisma.user.upsert({
     where: { email: 'patron@library.test' },
-    update: {},
-    create: { email: 'patron@library.test', name: 'Pat Patron', role: Role.PATRON },
+    update: { password: patronPassword },
+    create: {
+      email: 'patron@library.test',
+      name: 'Pat Patron',
+      password: patronPassword,
+      role: Role.PATRON,
+    },
   });
 
   // Stretch: one sample review
